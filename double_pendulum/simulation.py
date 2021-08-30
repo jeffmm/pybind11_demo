@@ -53,7 +53,7 @@ class DoublePendulum:
         """
         self._pendulum.Simulate(n_steps, dt, n_record)
         self.data = pd.DataFrame(
-            self._pendulum.Data(),
+            self._pendulum.GetData(),
             columns=["time", "x1", "y1", "th1", "x2", "y2", "th2", "ke", "pe"],
         )
         self.data = self.data.set_index("time")

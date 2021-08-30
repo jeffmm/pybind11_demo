@@ -71,7 +71,7 @@ PYBIND11_MODULE(_double_pendulum, m) {
         )pbdoc",
             py::arg("th1"),
             py::arg("th2"))
-    .def("Data", [] (DoublePendulum &pendulum) {
+    .def("GetData", [] (DoublePendulum &pendulum) {
         const matrix data = pendulum.GetData();
         size_t N = data.size();
         size_t M = data[0].size();

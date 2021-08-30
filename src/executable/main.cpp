@@ -1,6 +1,7 @@
 #include "../double_pendulum/double_pendulum.hpp"
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 
 void print_help(const char* name) {
     std::cerr << name << " expects 9 parameters: \n";
@@ -31,5 +32,17 @@ int main(int argc, const char** argv) {
 
     DoublePendulum pendulum(m1, m2, l1, l2, th1, th2);
     pendulum.Simulate(n_steps, dt, n_record);
+    const matrix data = pendulum.GetData();
+    size_t N = data.size();
+    size_t M = data[0].size();
+    std::ofstream fout("double_pendulum.dat");
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; j < M; ++ j) {
+            fout << data[i][j] << " ";
+        }
+        fout << "\n";
+    }
+    fout.close();
+
     return 0;
 }
