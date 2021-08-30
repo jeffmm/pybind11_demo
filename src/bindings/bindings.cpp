@@ -32,15 +32,15 @@ PYBIND11_MODULE(_double_pendulum, m) {
            m2: Mass of pendulum 2
            l1: Length of pendulum 1
            l2: Length of pendulum 2
-           th1: Initial angle of pendulum 1 relative to resting
-           th2: Initial angle of pendulum 2 relative to resting
+           th1: Initial angle of pendulum 1 relative to resting, in degrees
+           th2: Initial angle of pendulum 2 relative to resting, in degrees
         )pbdoc",
             py::arg("m1") = 1.0,
             py::arg("m2") = 1.0,
             py::arg("l1") = 1.0,
             py::arg("l2") = 1.0,
-            py::arg("th1") = 0.6,
-            py::arg("th2") = 0.25)
+            py::arg("th1") = 30.0,
+            py::arg("th2") = 45.0)
     .def("Simulate", &DoublePendulum::Simulate,
         R"pbdoc(
         Run a simulation of a double pendulum.
@@ -51,8 +51,8 @@ PYBIND11_MODULE(_double_pendulum, m) {
             n_record: Frequency at which to record pendulum data for analysis
         )pbdoc",
             py::arg("n_steps"),
-            py::arg("dt") = 0.001,
-            py::arg("n_record") = 100)
+            py::arg("dt") = 0.0001,
+            py::arg("n_record") = 1000)
     .def("SetMasses", &DoublePendulum::SetMasses,
         R"pbdoc(
         Set pendulum masses.
@@ -72,9 +72,9 @@ PYBIND11_MODULE(_double_pendulum, m) {
             py::arg("th1"),
             py::arg("th2"))
     .def("Data", [] (DoublePendulum &pendulum) {
-        float** data = pendulum.GetData();
-        size_t N = pendulum.GetNData();
-        size_t M = 7;
+        const matrix data = pendulum.GetData();
+        size_t N = data.size();
+        size_t M = data[0].size();
 
         py::array_t<float, py::array::c_style> arr({N, M});
 
@@ -86,7 +86,11 @@ PYBIND11_MODULE(_double_pendulum, m) {
             }
         }
         return arr;
-    });
+        })
+    .def("__repr__", [] (DoublePendulum &pendulum) {
+            return pendulum.GetDescription();
+        }
+    );
 
 
 

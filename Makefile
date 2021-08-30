@@ -4,9 +4,7 @@ CONTAINER_NAME="pybind11_tutorial_develop_${USER}"
 
 PROJECT=pybind11_tutorial
 
-VERSION_FILE:=VERSION
 COMPOSE_FILE=docker/docker-compose.yml
-TAG:=$(shell cat ${VERSION_FILE})
 
 # takes advantage of the makefile structure (command; ## documentation)
 # to generate help
@@ -21,6 +19,10 @@ dev-start: .env ## Primary make command for devs, spins up containers
 
 dev-stop: ## Spin down active containers
 	docker-compose -f $(COMPOSE_FILE) --project-name $(PROJECT) down
+
+# Useful when Dockerfile/requirements are updated)
+dev-rebuild: .env ## Rebuild images for dev containers
+	docker-compose -f $(COMPOSE_FILE) --project-name $(PROJECT) up -d --build
 
 bash: dev-start ## Provides an interactive bash shell in the container
 	docker exec -it $(CONTAINER_NAME) bash
