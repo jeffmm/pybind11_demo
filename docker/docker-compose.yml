@@ -7,9 +7,9 @@ services:
       - "127.0.0.1::8888"
     volumes:
       - ../:/mnt
-    entrypoint: bash -c "cd /mnt && jupyter lab --NotebookApp.token='' --ip=0.0.0.0 --allow-root && /bin/bash"
+    entrypoint: bash -c "cd /mnt && pip install . && jupyter lab --NotebookApp.token='' --ip=0.0.0.0 --allow-root && /bin/bash"
     stdin_open: true
-    container_name: "pybind11_tutorial_develop_${USER}"
+    container_name: "pybind11_demo_develop_${USER}"
     tty: true
     env_file:
       - ../.env

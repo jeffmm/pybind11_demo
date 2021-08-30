@@ -1,8 +1,8 @@
 .PHONY: help, dev-start, dev-stop
 
-CONTAINER_NAME="pybind11_tutorial_develop_${USER}"
+CONTAINER_NAME="pybind11_demo_develop_${USER}"
 
-PROJECT=pybind11_tutorial
+PROJECT=pybind11_demo
 
 COMPOSE_FILE=docker/docker-compose.yml
 
