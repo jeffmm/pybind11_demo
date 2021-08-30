@@ -1,0 +1,3 @@
+add_subdirectory(double_pendulum)
+add_subdirectory(executable)
+add_subdirectory(bindings)
