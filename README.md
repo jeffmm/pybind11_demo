@@ -2,23 +2,38 @@
 
 This project serves as a demonstration of how to convert a C++ library into a Python package using pybind11.
 
+- [Motivation](#motivation)
+  - [Case study](#case-study)
+- [Demo](#demo)
+  - [Project structure](#project-structure)
+  - [Noteworthy file descriptions](#noteworthy-file-descriptions)
+    - [`setup.py`](#setup.py)
+    - [`CMakeLists.txt`](#cmakelists.txt)
+    - [`bindings.cpp`](#bindings.cpp)
+    - [`simulation.py`](#simulation.py)
+- [Build and install](#build-and-install)
+  - [Using Docker and `Makefile`](#using-docker-and-makefile)
+    - [Test with Jupyterlab](#test-with-jupyterlab)
+    - [Test using CLI in container](#test-using-cli-in-container)
+  - [Building manually](#building-manually)
+
 ## Motivation
 
 Python is the language of modern machine learning and AI, but C++ is superior to Python in its fast and optimized execution of code. This is why most "fast" libraries in the Python data stack are simply pre-compiled C++ code wrapped in a Python interface (e.g. `numpy`). Many cutting edge algorithms that are being developed and implemented by academics are written in low-level languages like C++ due to its speed and flexibility.
 
-I love Python, but as a former C++ developer, I also know that it is occasionally preferable to write algorithms in a low-level language, where one no longer needs to fear nested for-loops as "bad practice", nor wonder whether the code being written is "pythonic" enough.
+I love Python, but as a former C++ developer, I also know that it is occasionally preferable to write algorithms in a low-level language, where one no longer needs to fear nested for-loops as "bad practice", nor wonder whether the code being written feels "Pythonic" enough.
 
 But it doesn't have to be zero sum; we can have the best of both worlds---the speed of C++ and the zen of Python---by referencing C++ functions and classes from within Python. And with pybind11, it's really easy to do.
 
 ### Case study
 
-Recently, I needed to train a Dynamic Topic Model. The model is currently available as a pure Python algorithm in the `gensim` package, but it is orders of magnitude slower than the C++ version released by the Blei lab. The Python version would've been fine if I just needed to train one model, but I also needed to do hyperparameter tuning. It was actually faster for me to wrap the C++ code in Python bindings and train the models than it was to use the available `gensim` version. As a bonus, the Python-wrapped DTM model is now available as a Python package that I can use in the future: [`dtmpy`](https://github.com/jeffmm/dtmpy).
+Recently, I needed to train a Dynamic Topic Model. The model is currently available as a pure Python algorithm in the `gensim` package, but it is orders of magnitude slower than the C++ version released by the Blei lab (the inventors of DTM). The Python version would've been fine if I just needed to train one model, but I also needed to do hyperparameter tuning. It was actually faster for me to wrap the C++ code in Python bindings and train the models than it would have been for me to use the available `gensim` version. As a bonus, the Python-wrapped DTM model is now available as a Python package that I can use in the future: [`dtmpy`](https://github.com/jeffmm/dtmpy).
 
 ## Demo
 
 This project wraps a C++ library named `double_pendulum` with Python bindings and integrates it into a Python package of the same name.
 
-The library itself contains a single class `DoublePendulum`, which manages a physics simulation of a double pendulum. Python bindings allow the class to be initialized and its methods accessed from within Python. The bindings also include a special method that converts an internal C++ data array of simulation data into a `numpy` array.
+The library itself contains a single class `DoublePendulum`, which runs a physics simulation of a double pendulum. Python bindings allow the class to be initialized and its methods accessed from within Python. The bindings also include a special method that converts an internal C++ data array of simulation data into a `numpy` array.
 
 The configuration in `setup.py` uses `cmake` to compile the C++ library and export the bindings as an intermediary Python module named `_double_pendulum`, which is imported and used by the main Python module `double_pendulum`. This setup allows you to write functions and classes in both Python and C++, and use them all in one module---speed and zen.
 
@@ -52,7 +67,7 @@ The project has the following organization structure:
         └── bindings.cpp        <- Source code for Python bindings for C++ library
 ```
 
-## Noteworthy files
+### Noteworthy file descriptions
 
 #### `setup.py`
 
@@ -114,23 +129,22 @@ namespace py = pybind11;
 // names need not be different, but they are here for added clarity.
 PYBIND11_MODULE(py_lib, m) {
     m.doc() = R"pbdoc(
-        This is my module docstring.
+    This is my module docstring.
     )pbdoc";
 
     // Reference a function named my_func defined in my_lib.hpp to create a Python
     // function py_lib.py_func
     m.def("py_func", &my_func,
-    R"pbdoc(
-    This is the docstring for function py_func.
+        R"pbdoc(
+        This is the docstring for function py_func.
 
-    Args:
-        x: Description of arg x.
-
-    Returns:
-        Return value description.
-    )pbdoc",
-    // Define arguments and their defaults.
-    py::arg("x"));
+        Args:
+            x: Description of argument x.
+            y: Description of argument y, defaults to 1.
+        )pbdoc",
+        // Define function arguments and defaults values
+        py::arg("x"), py::arg("y") = 1
+    );
 
     // Reference a class named MyClass defined in my_lib.hpp to create a Python
     // class py_lib.PyClass
@@ -139,24 +153,19 @@ PYBIND11_MODULE(py_lib, m) {
     .def(py::init<int>(),
         R"pbdoc(
         This is the docstring for class py_lib.PyClass
-
-        Args:
-           x: Description of kwarg x, defaults to 0.
         )pbdoc",
-            py::arg("x") = 0)
+        // Define an argument with a default value
+        py::arg("x") = 0
+    )
     // Binding for public class method Foo
     .def("Foo", &MyClass::Foo,
         R"pbdoc(
         This is the docstring for class method PyClass.Foo.
-
-        Args:
-            x: Description of arg x
-            y: Description of kwarg y, defaults to 1.
         )pbdoc",
-            py::arg("x"),
-            py::arg("y") = 1)
-    // Create a lambda function to add capability beyond existing class methods:
-    // use attribute MyClass.name to generate a __repr__ string.
+        py::arg("x"), py::arg("y") = 1
+    )
+    // Lambda functions can be used to extend beyond existing class methods:
+    // use class attribute MyClass.name to generate a __repr__ string.
     .def("__repr__", [] (MyClass &a) {
             return "<py_lib.PyClass named '" + a.name + "'>";
         }
@@ -169,6 +178,43 @@ PYBIND11_MODULE(py_lib, m) {
     m.attr("__version__") = "dev";
 #endif
 }
+```
+
+#### `simulation.py`
+
+This is the where the main Python module is defined. It implements and extends the module defined in `bindings.cpp` so that the module _feels_ like a Pure Python package, but _runs_ like C++ under the hood.
+
+For example, if I wanted to extend the `py_lib` module defined in the `bindings.cpp` example above, I could name the final Python package `pylib` and create the file `pylib/module.py`:
+
+```python
+# pylib/module.py
+
+from py_lib import PyClass as pc
+
+# The Python version of the class, implementing and extending the C++ version
+class PyClass:
+    def __init__(self, x: int = 0):
+        """Description of my class PyClass."""
+        self.x = x
+        self.pc = pc(self.x)
+    def foo(self, y: int = 1):
+        """Description of class method foo."""
+        self.pc.Foo(self.x, y)
+    def summary(self):
+        """Description of a new Python method I want to add."""
+        # TODO: extend PyClass with new methods written in Python
+        pass
+```
+
+The accompanying `__init__.py` file could look like this:
+
+```python
+# pylib/__init__.py
+
+# Import the Python version of PyClass
+from pylib.module import PyClass
+# Import py_func directly from the C++ bindings module
+from py_lib import py_func
 ```
 
 ## Build and install
